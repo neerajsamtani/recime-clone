@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import List
 
 from pydantic import BaseModel
@@ -7,14 +8,14 @@ class Ingredient(BaseModel):
     """Represents a recipe ingredient with quantity and unit."""
 
     name: str
-    quantity: float
+    quantity: Decimal
     unit: str
 
 
 class Macro(BaseModel):
     """Represents nutritional macro information."""
 
-    amount: float
+    amount: Decimal
     unit: str
 
 
@@ -23,9 +24,10 @@ class Recipe(BaseModel):
 
     name: str
     servings: int
-    calories: float
+    calories: Decimal
     fat: Macro | None
     carbs: Macro | None
     protein: Macro | None
     ingredients: List[Ingredient]
     instructions: List[str]
+    url: str  # URL where the recipe was found

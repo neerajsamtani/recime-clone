@@ -63,8 +63,8 @@ def create_app(config=None):
             return jsonify({"error": "No recipe content found"}), 404
 
         # Parse the recipe
-        parser = RecipeParser()
-        recipes = parser.parse_recipes([recipe_content])
+        parser = RecipeParser(storage_type="dynamodb")
+        recipes = parser.parse_recipes([recipe_content], [url])
 
         if not recipes:
             return jsonify({"error": "Failed to parse recipe content"}), 400
