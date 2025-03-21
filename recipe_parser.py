@@ -15,7 +15,7 @@ class RecipeParser:
     def __init__(self):
         """Initialize the RecipeParser with OpenAI client and load environment variables."""
         load_dotenv()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI()
         self.output_file = "recipes.json"
 
     def parse_recipe(self, description: str) -> Optional[Recipe]:
@@ -91,6 +91,7 @@ class RecipeParser:
             # Create directory if it doesn't exist
             output_dir = Path(self.output_file).parent
             output_dir.mkdir(parents=True, exist_ok=True)
+            print(output_dir)
 
             # Load existing recipes
             existing_recipes = []
@@ -105,49 +106,3 @@ class RecipeParser:
 
         except Exception as e:
             print(f"Error saving recipe: {str(e)}")
-
-
-def main():
-    """Main function to demonstrate usage."""
-    parser = RecipeParser()
-
-    # Example recipe description
-    description = """
-    Classic Chocolate Chip Cookies
-    
-    Makes 24 cookies
-    
-    Nutritional Info (per cookie):
-    Calories: 150
-    Fat: 7g
-    Carbs: 20g
-    Protein: 2g
-    
-    Ingredients:
-    - 2.25 cups all-purpose flour
-    - 1 cup butter, softened
-    - 0.75 cup granulated sugar
-    - 0.75 cup packed brown sugar
-    - 2 large eggs
-    - 1 teaspoon vanilla extract
-    - 1 teaspoon baking soda
-    - 0.5 teaspoon salt
-    - 2 cups chocolate chips
-    
-    Instructions:
-    1. Preheat oven to 375°F
-    2. Cream together butter and sugars until smooth
-    3. Beat in eggs and vanilla
-    4. Mix in flour, baking soda, and salt
-    5. Stir in chocolate chips
-    6. Drop rounded tablespoons onto ungreased baking sheets
-    7. Bake for 10-12 minutes until golden brown
-    8. Let cool on baking sheets for 5 minutes
-    """
-
-    recipes = parser.parse_recipes([description])
-    print(f"Successfully processed {len(recipes)} recipes")
-
-
-if __name__ == "__main__":
-    main()

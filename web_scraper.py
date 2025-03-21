@@ -1,8 +1,9 @@
-import os
-from datetime import datetime
+import logging
 
 import requests
 from bs4 import BeautifulSoup
+
+from recipe_parser import RecipeParser
 
 
 def fetch_webpage(url):
@@ -13,15 +14,6 @@ def fetch_webpage(url):
         # Raise an exception for bad status codes
         response.raise_for_status()
 
-        # Create a filename based on timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"webpage_{timestamp}.html"
-
-        # Save the raw HTML to a file
-        # with open(filename, "w", encoding="utf-8") as f:
-        #     f.write(response.text)
-        # print(f"HTML content saved to: {filename}")
-
         # Create BeautifulSoup object to parse the HTML
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -31,26 +23,41 @@ def fetch_webpage(url):
         return None
 
 
-def extract_meta_description(soup):
-    meta_tag = soup.find("meta", attrs={"name": "description"})
-    if meta_tag:
-        return meta_tag.get("content")
-    return None
+def extract_recipe_content(soup):
+    main_content = (
+        soup.find("meta", attrs={"name": "description"}).get("content")
+        or soup.find("article")
+        or soup.find("main")
+        or soup.find("div", class_="content")
+    )
+    return main_content
 
 
 def main():
+    # Initialize the recipe parser
+    parser = RecipeParser()
+
     # Example usage
     url = "https://www.instagram.com/p/DF6FuFxS-UD/"
     soup = fetch_webpage(url)
 
     if soup:
-        # Get meta description
-        description = extract_meta_description(soup)
-        if description:
-            print("\nMeta Description Content:")
-            print(description)
+        # Extract recipe content from the webpage
+        recipe_content = extract_recipe_content(soup)
+
+        if recipe_content:
+            logging.info("\nExtracted Recipe Content:")
+            logging.info(recipe_content)
+
+            # Parse the recipe
+            recipe = parser.parse_recipes([recipe_content])
+            if recipe:
+                logging.info("\nSuccessfully parsed recipe!")
+                logging.info(recipe)
+            else:
+                print("\nFailed to parse recipe content")
         else:
-            print("\nNo meta description found")
+            print("\nNo recipe content found")
 
 
 if __name__ == "__main__":
