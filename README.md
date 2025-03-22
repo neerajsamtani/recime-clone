@@ -6,7 +6,8 @@ A Flask-based web service that scrapes and parses recipe information from websit
 
 - Python 3.x
 - Nginx
-- Domain name (for SSL setup)
+- Domain name with DNS configured
+- Certbot for SSL certificate management
 
 ## Installation
 
@@ -29,27 +30,56 @@ pip install -r requirements.txt
 
 ## Configuration
 
-### SSL Certificates
-1. Obtain SSL certificates (e.g., from Let's Encrypt)
-2. Update `nginx.conf` with your certificate paths:
-```nginx
-ssl_certificate /path/to/your/certificate.crt;
-ssl_certificate_key /path/to/your/private.key;
-```
-3. Replace `your_domain.com` with your actual domain name in `nginx.conf`
-
 ### Nginx Setup
-1. Copy the nginx configuration:
+1. Create a new Nginx server block:
 ```bash
-sudo cp nginx.conf /etc/nginx/sites-available/recime
-sudo ln -s /etc/nginx/sites-available/recime /etc/nginx/sites-enabled/
+sudo nano /etc/nginx/sites-available/your_domain.com
 ```
 
-2. Test and restart Nginx:
+2. Add the following configuration (adjust domain name as needed):
+```nginx
+server {
+
+        root /var/www/recime/html;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name your_domain.com;
+
+        location / {
+                try_files $uri $uri/ =404;
+        }
+
+}
+server {
+        listen 80;
+        listen [::]:80;
+
+        server_name your_domain.com;
+    return 404; # managed by Certbot
+
+
+}
+```
+
+3. Enable the site and test Nginx configuration:
 ```bash
+sudo ln -s /etc/nginx/sites-available/your_domain.com /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 ```
+
+### SSL Certificates with Certbot
+1. Install Certbot and the Nginx plugin:
+```bash
+sudo apt update
+sudo apt install certbot python3-certbot-nginx
+```
+
+2. Obtain SSL certificates using Certbot:
+```bash
+sudo certbot --nginx -d your.domain.com
+```
+Certbot will automatically configure Nginx for SSL.
 
 ## Running the Application
 
@@ -77,7 +107,7 @@ ps aux | grep gunicorn
 
 2. Test the health endpoint:
 ```bash
-curl https://your_domain.com/health
+curl https://your.domain.com/health
 ```
 
 ## API Endpoints
@@ -108,7 +138,7 @@ kill -TERM <master_process_id>
 ## Important Notes
 
 - Ensure your firewall allows traffic on ports 80 and 443
-- The Nginx user needs permission to access SSL certificates
+- Certbot will automatically manage SSL certificate renewal
 - Your domain DNS should be pointing to your server's IP
 - Some commands might require sudo privileges
 
