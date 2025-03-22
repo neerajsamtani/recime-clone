@@ -88,6 +88,29 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
+### UFW Firewall Configuration
+1. Install UFW if not already installed:
+```bash
+sudo apt update
+sudo apt install ufw
+```
+
+2. Configure UFW rules:
+```bash
+# Allow SSH (to prevent being locked out)
+sudo ufw allow ssh
+
+# Allow HTTP and HTTPS traffic
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+# Enable UFW
+sudo ufw enable
+
+# Verify the rules
+sudo ufw status
+```
+
 ### SSL Certificates with Certbot
 1. Install Certbot and the Nginx plugin:
 ```bash
