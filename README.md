@@ -28,6 +28,16 @@ source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+4. Create a `.env` file with
+```bash
+# OpenAI API Key
+OPENAI_API_KEY=your_openai_key
+
+# AWS Credentials
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+```
+
 ## Configuration
 
 ### Nginx Setup
@@ -40,17 +50,27 @@ sudo nano /etc/nginx/sites-available/your_domain.com
 ```nginx
 server {
 
-        root /var/www/recime/html;
-        index index.html index.htm index.nginx-debian.html;
-
         server_name your_domain.com;
 
         location / {
-                try_files $uri $uri/ =404;
+		include proxy_params;
+                proxy_pass http://127.0.0.1:8001;
         }
+
+    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/your_domain.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/your_domain.com/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
 }
 server {
+    if ($host = your_domain.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
         listen 80;
         listen [::]:80;
 
@@ -98,6 +118,47 @@ The application architecture:
 Client Request → Nginx (443/80) → Gunicorn (127.0.0.1:8000) → Flask App
 ```
 
+## Setting up Systemd Service
+
+1. Create a systemd service file:
+```bash
+sudo nano /etc/systemd/system/recime.service
+```
+
+2. Add the following configuration (adjust paths according to your setup):
+```ini
+[Unit]
+Description=Gunicorn instance to serve recime
+After=network.target
+
+[Service]
+User=username
+Group=www-data
+WorkingDirectory=/home/username/recime
+Environment="PATH=/home/username/recime/venv/bin"
+ExecStart=/bin/bash /home/username/recime/run.sh
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. Start and enable the service:
+```bash
+sudo systemctl start recime
+sudo systemctl enable recime
+```
+
+4. Check the service status:
+```bash
+sudo systemctl status recime
+```
+
+5. If you make changes to the service file:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart recime
+```
+
 ## Verification
 
 1. Check if Gunicorn is running:
@@ -118,12 +179,30 @@ curl https://your.domain.com/health
 
 ## Monitoring
 
-- Nginx logs: 
-  - `/var/log/nginx/error.log`
-  - `/var/log/nginx/access.log`
-- Gunicorn logs will be in stdout where you ran `run.sh`
+If you encounter any errors, trying checking the following:
+```bash
+# check the Nginx error logs
+sudo less /var/log/nginx/error.log
+# check the Nginx access logs
+sudo less /var/log/nginx/access.log
+# check the Nginx process logs
+sudo journalctl -u nginx
+# check your Flask app's Gunicorn logs
+sudo journalctl -u recime
+```
 
 ## Stopping the Application
+
+### If you've set up systemd service
+
+Run
+```bash
+sudo systemctl stop recime
+# If you dont want it to restart later
+sudo systemctl disable recime
+```
+
+### If you've not set up systemd service
 
 1. Find the Gunicorn process:
 ```bash
