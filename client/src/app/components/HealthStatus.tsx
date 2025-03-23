@@ -1,5 +1,3 @@
-import { config } from '@/config';
-
 interface ApiResponse {
     status: string;
     timestamp: number;
@@ -7,7 +5,8 @@ interface ApiResponse {
 }
 
 async function getHealthStatus(): Promise<ApiResponse> {
-    const response = await fetch(`${config.api.url}/`, {
+    // In server components, we need to use the full URL
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/health`, {
         // Adding next: { revalidate: 30 } would cache the response for 30 seconds
         cache: 'no-store' // Disable caching to always get fresh data
     });
