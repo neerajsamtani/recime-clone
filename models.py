@@ -31,3 +31,6 @@ class Recipe(BaseModel):
     ingredients: List[Ingredient]
     instructions: List[str]
     url: str  # URL where the recipe was found
+    created_at: int  # unix timestamp
+    updated_at: int  # unix timestamp
+    image_url: str | None

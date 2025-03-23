@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import urllib.parse
 
 import requests
 from bs4 import BeautifulSoup
@@ -44,10 +45,17 @@ def create_app(config_name="default"):
                 or soup.find("main")
                 or soup.find("div", class_="content")
             )
-            return main_content
+
+            # Extract and decode image URL from og:image meta tag
+            image_url = None
+            og_image = soup.find("meta", property="og:image")
+            if og_image and og_image.get("content"):
+                image_url = urllib.parse.unquote(og_image["content"])
+
+            return main_content, image_url
         except Exception as e:
             logger.error(f"Error extracting recipe content: {str(e)}")
-            return None
+            return None, None
 
     @app.route("/scrape/<path:url>", methods=["GET"])
     def scrape_recipe(url):
@@ -56,12 +64,12 @@ def create_app(config_name="default"):
             if not soup:
                 return jsonify({"error": "Failed to fetch webpage"}), 400
 
-            recipe_content = extract_recipe_content(soup)
+            recipe_content, image_url = extract_recipe_content(soup)
             if not recipe_content:
                 return jsonify({"error": "No recipe content found"}), 404
 
             parser = RecipeParser(storage_type="dynamodb")
-            recipes = parser.parse_recipes([recipe_content], [url])
+            recipes = parser.parse_recipes([recipe_content], [url], [image_url])
 
             if not recipes:
                 return jsonify({"error": "Failed to parse recipe content"}), 400

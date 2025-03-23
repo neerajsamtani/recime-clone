@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from pathlib import Path
 from typing import List, Literal, Optional
 
@@ -39,13 +40,16 @@ class RecipeParser:
             self.dynamodb = boto3.resource("dynamodb", region_name=region)
             self.table = self.dynamodb.Table(table_name)
 
-    def parse_recipe(self, description: str, url: str) -> Optional[Recipe]:
+    def parse_recipe(
+        self, description: str, url: str, image_url: Optional[str] = None
+    ) -> Optional[Recipe]:
         """
         Parse a recipe from a text description using OpenAI.
 
         Args:
             description: Text description of the recipe
             url: URL where the recipe was found
+            image_url: URL of the recipe's image (optional)
 
         Returns:
             Recipe object if successful, None otherwise
@@ -76,28 +80,44 @@ class RecipeParser:
             recipe_dict = json.loads(response.choices[0].message.content)
             recipe = Recipe.model_validate(recipe_dict)
             recipe.url = url  # Add URL to the recipe
+            recipe.image_url = image_url  # Add image URL to the recipe
+            current_time = int(time.time())  # Get current Unix timestamp
+            recipe.created_at = current_time
+            recipe.updated_at = current_time
             return recipe
 
         except Exception as e:
             print(f"Error parsing recipe: {str(e)}")
             return None
 
-    def parse_recipes(self, descriptions: List[str], urls: List[str]) -> List[Recipe]:
+    def parse_recipes(
+        self,
+        descriptions: List[str],
+        urls: List[str],
+        image_urls: Optional[List[str]] = None,
+    ) -> List[Recipe]:
         """
         Process multiple recipe descriptions.
 
         Args:
             descriptions: List of recipe descriptions to parse
             urls: List of URLs where the recipes were found
+            image_urls: List of image URLs for the recipes (optional)
 
         Returns:
             List of successfully parsed Recipe objects
         """
         recipes = []
 
-        for i, (description, url) in enumerate(zip(descriptions, urls), 1):
+        # If no image URLs provided, use None for each recipe
+        if image_urls is None:
+            image_urls = [None] * len(descriptions)
+
+        for i, (description, url, image_url) in enumerate(
+            zip(descriptions, urls, image_urls), 1
+        ):
             print(f"Processing recipe {i}...")
-            recipe = self.parse_recipe(description, url)
+            recipe = self.parse_recipe(description, url, image_url)
 
             if recipe:
                 recipes.append(recipe)
