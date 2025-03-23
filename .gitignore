@@ -45,3 +45,8 @@ __pycache__
 
 # generated files
 recipes.json
+
+# IDEs
+.vscode
+.idea
+.cursor
