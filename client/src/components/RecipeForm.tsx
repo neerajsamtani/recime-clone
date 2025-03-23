@@ -3,23 +3,45 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function RecipeForm() {
     const [inputValue, setInputValue] = useState("");
-    const [response, setResponse] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const res = await fetch("/api/echo", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: inputValue }),
-        });
-        const data = await res.json();
-        setResponse(data.text);
+        setIsLoading(true);
+
+        try {
+            const res = await fetch("/api/scrape", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ url: inputValue }),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                toast.success("Recipe imported successfully!", {
+                    description: "Your recipe has been added to the collection.",
+                });
+                setInputValue(""); // Clear the input on success
+            } else {
+                toast.error("Failed to import recipe", {
+                    description: data.error || "An unexpected error occurred",
+                });
+            }
+        } catch {
+            toast.error("Failed to import recipe", {
+                description: "An unexpected error occurred",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -31,17 +53,19 @@ export function RecipeForm() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     className="w-full"
+                    disabled={isLoading}
                 />
-                <Button type="submit" className="w-full">
-                    Submit
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Importing...
+                        </>
+                    ) : (
+                        "Import Recipe"
+                    )}
                 </Button>
             </form>
-
-            {response && (
-                <div className="mt-6 p-4 bg-muted rounded-lg">
-                    <p className="text-sm">{response}</p>
-                </div>
-            )}
         </Card>
     );
 } 
