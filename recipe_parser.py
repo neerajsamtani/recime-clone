@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import time
@@ -163,17 +164,37 @@ class RecipeParser:
         except Exception as e:
             print(f"Error saving recipe to file: {str(e)}")
 
+    def _generate_recipe_id(self, url: str) -> str:
+        """
+        Generate a consistent hash ID from a URL.
+
+        Args:
+            url: URL to hash
+
+        Returns:
+            str: SHA-256 hash of the URL
+        """
+        return hashlib.sha256(url.encode()).hexdigest()
+
     def _save_recipe_to_dynamodb(self, recipe: Recipe):
         """
-        Save a recipe to DynamoDB.
+        Save a recipe to DynamoDB, checking for duplicates using the URL hash.
 
         Args:
             recipe: Recipe object to save
         """
         try:
             recipe_dict = recipe.model_dump()
-            # Use URL as the ID
-            recipe_dict["id"] = recipe.url
+            # Generate hash ID from URL
+            recipe_id = self._generate_recipe_id(recipe.url)
+            recipe_dict["id"] = recipe_id
+
+            # Check if recipe already exists
+            existing_recipe = self.table.get_item(Key={"id": recipe_id}).get("Item")
+
+            if existing_recipe:
+                print(f"Recipe with URL {recipe.url} already exists, skipping...")
+                return
 
             self.table.put_item(Item=recipe_dict)
             print(f"Successfully saved recipe {recipe.name} to DynamoDB")

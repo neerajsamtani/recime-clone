@@ -1,8 +1,11 @@
 'use client';
 
 import { cn } from "@/lib/utils";
-import { ExternalLink, Users } from 'lucide-react';
+import { ExternalLink, Trash2, Users } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 interface Macro {
@@ -34,9 +37,42 @@ interface Recipe {
 interface RecipeListProps {
     className?: string;
     recipes?: Recipe[];
+    onRecipeDeleted?: () => void;
 }
 
-export function RecipeList({ className, recipes = [] }: RecipeListProps) {
+export function RecipeList({ className, recipes = [], onRecipeDeleted }: RecipeListProps) {
+    const [deletingRecipes, setDeletingRecipes] = useState<Set<string>>(new Set());
+
+    const handleDeleteRecipe = async (recipeId: string) => {
+        try {
+            setDeletingRecipes(prev => new Set([...prev, recipeId]));
+            const response = await fetch(`/api/recipes/${recipeId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to delete recipe');
+            }
+
+            toast.success('Recipe deleted successfully');
+
+            // Trigger refresh of recipes list
+            if (onRecipeDeleted) {
+                onRecipeDeleted();
+            }
+        } catch (error) {
+            console.error('Error deleting recipe:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to delete recipe. Please try again.');
+        } finally {
+            setDeletingRecipes(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(recipeId);
+                return newSet;
+            });
+        }
+    };
+
     if (!recipes || recipes.length === 0) {
         return (
             <div className={cn("mt-8", className)}>
@@ -78,9 +114,11 @@ export function RecipeList({ className, recipes = [] }: RecipeListProps) {
                                         })}
                                     </CardDescription>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Users className="h-4 w-4" />
-                                    <span>Serves {recipe.servings}</span>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Users className="h-4 w-4" />
+                                        <span>Serves {recipe.servings}</span>
+                                    </div>
                                 </div>
                             </div>
                         </CardHeader>
@@ -138,15 +176,27 @@ export function RecipeList({ className, recipes = [] }: RecipeListProps) {
                                 </ol>
                             </div>
 
-                            <a
-                                href={recipe.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 text-sm text-primary hover:underline group-hover:text-primary/80 transition-colors"
-                            >
-                                <ExternalLink className="h-4 w-4" />
-                                View Original Recipe
-                            </a>
+                            {/* Footer with links and actions */}
+                            <div className="flex items-center justify-between pt-4 border-t">
+                                <a
+                                    href={recipe.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline group-hover:text-primary/80 transition-colors"
+                                >
+                                    <ExternalLink className="h-4 w-4" />
+                                    View Original Recipe
+                                </a>
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    disabled={deletingRecipes.has(recipe.id)}
+                                    onClick={() => handleDeleteRecipe(recipe.id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete recipe</span>
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 ))}

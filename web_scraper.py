@@ -110,6 +110,17 @@ def create_app(config_name="default"):
     def health_check():
         return jsonify({"status": "healthy"}), 200
 
+    @app.route("/recipes/<recipe_id>", methods=["DELETE"])
+    def delete_recipe(recipe_id):
+        try:
+            parser = RecipeParser(storage_type="dynamodb")
+            # Delete the recipe from DynamoDB
+            parser.table.delete_item(Key={"id": recipe_id})
+            return jsonify({"message": "Recipe deleted successfully"}), 200
+        except Exception as e:
+            logger.error(f"Error deleting recipe {recipe_id}: {str(e)}")
+            return jsonify({"error": "Failed to delete recipe"}), 500
+
     return app
 
 

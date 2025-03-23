@@ -4,9 +4,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{
       protocol: 'https',
-      hostname: 'scontent.cdninstagram.com'
-    }]
-  }
+      hostname: '*.cdninstagram.com'
+    }
+    ],
+  },
 };
 
 export default nextConfig;
