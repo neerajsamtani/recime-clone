@@ -7,11 +7,10 @@ import { Input } from './ui/input';
 
 interface SearchableRecipeListProps {
     recipes: Recipe[];
-    onRecipeDeleted?: () => void;
     className?: string;
 }
 
-export function SearchableRecipeList({ recipes, onRecipeDeleted, className }: SearchableRecipeListProps) {
+export function SearchableRecipeList({ recipes, className }: SearchableRecipeListProps) {
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredRecipes = recipes.filter((recipe) => {
@@ -41,7 +40,6 @@ export function SearchableRecipeList({ recipes, onRecipeDeleted, className }: Se
             </div>
             <RecipeList
                 recipes={filteredRecipes}
-                onRecipeDeleted={onRecipeDeleted}
                 className={className}
             />
         </div>

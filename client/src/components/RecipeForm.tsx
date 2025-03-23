@@ -5,12 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SiInstagram } from "@icons-pack/react-simple-icons";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export function RecipeForm() {
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,6 +33,7 @@ export function RecipeForm() {
                     description: "Your recipe has been added to the collection.",
                 });
                 setInputValue(""); // Clear the input on success
+                router.refresh(); // Refresh the page data
             } else {
                 toast.error("Failed to import recipe", {
                     description: data.error || "An unexpected error occurred",

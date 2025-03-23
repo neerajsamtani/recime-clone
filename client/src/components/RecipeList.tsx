@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Recipe } from "@/types/recipe";
 import { ExternalLink, Trash2, Users } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
@@ -12,11 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 interface RecipeListProps {
     className?: string;
     recipes?: Recipe[];
-    onRecipeDeleted?: () => void;
 }
 
-export function RecipeList({ className, recipes = [], onRecipeDeleted }: RecipeListProps) {
+export function RecipeList({ className, recipes = [] }: RecipeListProps) {
     const [deletingRecipes, setDeletingRecipes] = useState<Set<string>>(new Set());
+    const router = useRouter();
 
     const handleDeleteRecipe = async (recipeId: string) => {
         try {
@@ -31,11 +32,7 @@ export function RecipeList({ className, recipes = [], onRecipeDeleted }: RecipeL
             }
 
             toast.success('Recipe deleted successfully');
-
-            // Trigger refresh of recipes list
-            if (onRecipeDeleted) {
-                onRecipeDeleted();
-            }
+            router.refresh();
         } catch (error) {
             console.error('Error deleting recipe:', error);
             toast.error(error instanceof Error ? error.message : 'Failed to delete recipe. Please try again.');
