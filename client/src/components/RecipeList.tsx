@@ -59,7 +59,11 @@ export function RecipeList({ className, recipes = [] }: RecipeListProps) {
                                 <div className="space-y-1">
                                     <CardTitle className="line-clamp-2">{recipe.name}</CardTitle>
                                     <CardDescription>
-                                        Added on {new Date(recipe.created_at).toLocaleDateString()}
+                                        Added on {new Date(Number(recipe.created_at) * 1000).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        })}
                                     </CardDescription>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
