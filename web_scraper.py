@@ -72,6 +72,26 @@ def create_app(config_name="default"):
             logger.error(f"Error processing recipe from {url}: {str(e)}")
             return jsonify({"error": "Internal server error"}), 500
 
+    @app.route("/recipes", methods=["GET"])
+    def get_all_recipes():
+        try:
+            parser = RecipeParser(storage_type="dynamodb")
+            # Scan the DynamoDB table to get all recipes
+            response = parser.table.scan()
+            recipes = response.get("Items", [])
+
+            # Handle pagination if there are more items
+            while "LastEvaluatedKey" in response:
+                response = parser.table.scan(
+                    ExclusiveStartKey=response["LastEvaluatedKey"]
+                )
+                recipes.extend(response.get("Items", []))
+
+            return jsonify(recipes)
+        except Exception as e:
+            logger.error(f"Error fetching recipes: {str(e)}")
+            return jsonify({"error": "Failed to fetch recipes"}), 500
+
     @app.route("/")
     def index():
         return jsonify(
