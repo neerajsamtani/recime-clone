@@ -8,7 +8,7 @@ class Ingredient(BaseModel):
     """Represents a recipe ingredient with quantity and unit."""
 
     name: str
-    quantity: Decimal
+    quantity: Decimal | str
     unit: str
 
 
