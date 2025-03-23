@@ -16,7 +16,7 @@ export function RecipeForm() {
         setIsLoading(true);
 
         try {
-            const res = await fetch("/api/scrape", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/scrape`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
