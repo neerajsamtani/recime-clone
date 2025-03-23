@@ -1,38 +1,13 @@
 'use client';
 
 import { cn } from "@/lib/utils";
+import { Recipe } from "@/types/recipe";
 import { ExternalLink, Trash2, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-
-interface Macro {
-    amount: number;
-    unit: string;
-}
-
-interface Ingredient {
-    name: string;
-    quantity: number;
-    unit: string;
-}
-
-interface Recipe {
-    id: string;
-    name: string;
-    servings: number;
-    calories: number;
-    fat: Macro | null;
-    carbs: Macro | null;
-    protein: Macro | null;
-    ingredients: Ingredient[];
-    instructions: string[];
-    url: string;
-    created_at: string;
-    image_url?: string;
-}
 
 interface RecipeListProps {
     className?: string;
@@ -88,7 +63,6 @@ export function RecipeList({ className, recipes = [], onRecipeDeleted }: RecipeL
 
     return (
         <div className={cn("mt-8 space-y-6", className)}>
-            <h2 className="text-2xl font-semibold">Your Recipes</h2>
             <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
                 {recipes.map((recipe) => (
                     <Card key={recipe.id} className="group bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors">

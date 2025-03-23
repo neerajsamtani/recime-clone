@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { RecipeList } from './RecipeList';
+import { SearchableRecipeList } from './SearchableRecipeList';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Skeleton } from './ui/skeleton';
 
@@ -44,7 +44,7 @@ export async function RecipeListContainer() {
                 </div>
             </div>
         }>
-            <RecipeList recipes={recipes} />
+            <SearchableRecipeList recipes={recipes} />
         </Suspense>
     );
 } 
