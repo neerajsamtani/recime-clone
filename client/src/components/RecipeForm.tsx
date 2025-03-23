@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SiInstagram } from "@icons-pack/react-simple-icons";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -45,21 +46,35 @@ export function RecipeForm() {
     };
 
     return (
-        <Card className="w-full max-w-xl p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                    type="text"
-                    placeholder="Enter recipe URL..."
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+        <Card className="w-full p-6 bg-card/50 backdrop-blur-sm">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <SiInstagram className="h-4 w-4" />
+                        <span className="text-sm font-medium">Instagram Recipe URL</span>
+                    </div>
+                    <Input
+                        type="text"
+                        placeholder="Paste an Instagram recipe post URL..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="w-full bg-background/50"
+                        disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Enter the URL of an Instagram post containing a recipe you&apos;d like to save
+                    </p>
+                </div>
+                <Button
+                    type="submit"
                     className="w-full"
-                    disabled={isLoading}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                    disabled={isLoading || !inputValue.trim()}
+                    size="lg"
+                >
                     {isLoading ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Importing...
+                            Importing Recipe...
                         </>
                     ) : (
                         "Import Recipe"
