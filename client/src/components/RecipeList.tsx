@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { ExternalLink, Users } from 'lucide-react';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 interface Macro {
@@ -27,6 +28,7 @@ interface Recipe {
     instructions: string[];
     url: string;
     created_at: string;
+    image_url?: string;
 }
 
 interface RecipeListProps {
@@ -55,6 +57,16 @@ export function RecipeList({ className, recipes = [] }: RecipeListProps) {
                 {recipes.map((recipe) => (
                     <Card key={recipe.id} className="group bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors">
                         <CardHeader>
+                            {recipe.image_url && (
+                                <div className="aspect-video w-full overflow-hidden rounded-lg relative">
+                                    <Image
+                                        src={recipe.image_url}
+                                        alt={recipe.name}
+                                        fill
+                                        className="object-cover transition-all hover:scale-105"
+                                    />
+                                </div>
+                            )}
                             <div className="flex items-start justify-between gap-4">
                                 <div className="space-y-1">
                                     <CardTitle className="line-clamp-2">{recipe.name}</CardTitle>
