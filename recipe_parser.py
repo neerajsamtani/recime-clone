@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import time
+from decimal import Decimal
 from pathlib import Path
 from typing import List, Literal, Optional
 
@@ -13,6 +14,15 @@ from openai import OpenAI
 from models import Recipe
 
 
+class DecimalEncoder(json.JSONEncoder):
+    """Custom JSON encoder to handle Decimal values."""
+
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super().default(obj)
+
+
 class RecipeParser:
     """Class to handle recipe parsing from text descriptions using OpenAI."""
 
@@ -22,6 +32,7 @@ class RecipeParser:
         output_file: str = "recipes.json",
         table_name: str = "recipes",
         region: str = "us-east-1",
+        client: Optional[OpenAI] = None,
     ):
         """
         Initialize the RecipeParser with OpenAI client and load environment variables.
@@ -31,9 +42,20 @@ class RecipeParser:
             output_file: Path to the output JSON file (only used if storage_type is "file")
             table_name: Name of the DynamoDB table (only used if storage_type is "dynamodb")
             region: AWS region for DynamoDB (only used if storage_type is "dynamodb")
+            client: Optional OpenAI client instance (if not provided, one will be created)
         """
         load_dotenv()
-        self.client = OpenAI()
+
+        # Only create a new OpenAI client if none is provided and we're not in a testing environment
+        if client is not None:
+            self.client = client
+        else:
+            # Check if we're in a testing environment
+            testing = os.environ.get("PYTEST_CURRENT_TEST") is not None
+            if testing:
+                raise ValueError("OpenAI client must be provided in test environment")
+            self.client = OpenAI()
+
         self.storage_type = storage_type
         self.output_file = output_file
 
@@ -159,7 +181,7 @@ class RecipeParser:
             # Append new recipe and save
             existing_recipes.append(recipe.model_dump())
             with open(self.output_file, "w") as f:
-                json.dump(existing_recipes, f, indent=4)
+                json.dump(existing_recipes, f, indent=4, cls=DecimalEncoder)
 
         except Exception as e:
             print(f"Error saving recipe to file: {str(e)}")

@@ -1,0 +1,149 @@
+import json
+from pathlib import Path
+
+from models import Recipe
+
+
+def test_recipe_parser_initialization(recipe_parser):
+    """
+    GIVEN: A RecipeParser instance
+    WHEN: It is initialized with file storage
+    THEN: It should have the correct attributes
+    """
+    assert recipe_parser.storage_type == "file"
+    assert isinstance(recipe_parser.output_file, str)
+    assert recipe_parser.client is not None
+
+
+def test_recipe_parser_dynamodb_initialization(recipe_parser_dynamodb):
+    """
+    GIVEN: A RecipeParser instance
+    WHEN: It is initialized with DynamoDB storage
+    THEN: It should have the correct attributes and table
+    """
+    assert recipe_parser_dynamodb.storage_type == "dynamodb"
+    assert recipe_parser_dynamodb.table is not None
+
+
+def test_parse_recipe_success(recipe_parser, sample_recipe_text):
+    """
+    GIVEN: A recipe text and URL
+    WHEN: parse_recipe is called
+    THEN: It should return a valid Recipe object
+    """
+    url = "https://example.com/recipe"
+    image_url = "https://example.com/recipe.jpg"
+
+    recipe = recipe_parser.parse_recipe(sample_recipe_text, url, image_url)
+
+    assert isinstance(recipe, Recipe)
+    assert recipe.name == "Test Recipe"
+    assert recipe.url == url
+    assert recipe.image_url == image_url
+    assert recipe.servings == 4
+    assert len(recipe.ingredients) == 1
+    assert len(recipe.instructions) == 1
+    assert recipe.created_at is not None
+    assert recipe.updated_at is not None
+
+
+def test_parse_recipe_failure(recipe_parser, mocker):
+    """
+    GIVEN: A recipe parser with a failing OpenAI client
+    WHEN: parse_recipe is called
+    THEN: It should return None and handle the error
+    """
+    mocker.patch.object(
+        recipe_parser.client.beta.chat.completions,
+        "parse",
+        side_effect=Exception("API Error"),
+    )
+
+    result = recipe_parser.parse_recipe("Invalid recipe", "https://example.com")
+    assert result is None
+
+
+def test_parse_recipes_batch(recipe_parser):
+    """
+    GIVEN: Multiple recipe descriptions and URLs
+    WHEN: parse_recipes is called
+    THEN: It should return a list of Recipe objects
+    """
+    descriptions = ["Recipe 1", "Recipe 2"]
+    urls = ["https://example.com/1", "https://example.com/2"]
+    image_urls = ["https://example.com/1.jpg", "https://example.com/2.jpg"]
+
+    recipes = recipe_parser.parse_recipes(descriptions, urls, image_urls)
+
+    assert len(recipes) == 2
+    assert all(isinstance(recipe, Recipe) for recipe in recipes)
+
+
+def test_save_recipe_to_file(recipe_parser):
+    """
+    GIVEN: A recipe and file storage configuration
+    WHEN: _save_recipe_to_file is called
+    THEN: The recipe should be saved to the JSON file
+    """
+    url = "https://example.com/recipe"
+    recipe = recipe_parser.parse_recipe("Test recipe", url)
+    recipe_parser._save_recipe_to_file(recipe)
+
+    output_file = Path(recipe_parser.output_file)
+    assert output_file.exists()
+
+    with open(output_file) as f:
+        saved_recipes = json.load(f)
+
+    assert len(saved_recipes) == 1
+    assert saved_recipes[0]["url"] == url
+
+
+def test_save_recipe_to_dynamodb(recipe_parser_dynamodb):
+    """
+    GIVEN: A recipe and DynamoDB storage configuration
+    WHEN: _save_recipe_to_dynamodb is called
+    THEN: The recipe should be saved to DynamoDB
+    """
+    url = "https://example.com/recipe"
+    recipe = recipe_parser_dynamodb.parse_recipe("Test recipe", url)
+    recipe_parser_dynamodb._save_recipe_to_dynamodb(recipe)
+
+    # Verify the recipe was saved
+    recipe_id = recipe_parser_dynamodb._generate_recipe_id(url)
+    saved_item = recipe_parser_dynamodb.table.get_item(Key={"id": recipe_id})
+
+    assert "Item" in saved_item
+    assert saved_item["Item"]["url"] == url
+
+
+def test_generate_recipe_id(recipe_parser):
+    """
+    GIVEN: A URL
+    WHEN: _generate_recipe_id is called
+    THEN: It should return a consistent hash
+    """
+    url = "https://example.com/recipe"
+    id1 = recipe_parser._generate_recipe_id(url)
+    id2 = recipe_parser._generate_recipe_id(url)
+
+    assert isinstance(id1, str)
+    assert id1 == id2  # Same URL should generate same hash
+
+
+def test_duplicate_recipe_dynamodb(recipe_parser_dynamodb):
+    """
+    GIVEN: A recipe that already exists in DynamoDB
+    WHEN: Attempting to save it again
+    THEN: It should skip the duplicate
+    """
+    url = "https://example.com/recipe"
+    recipe = recipe_parser_dynamodb.parse_recipe("Test recipe", url)
+
+    # Save the recipe twice
+    recipe_parser_dynamodb._save_recipe_to_dynamodb(recipe)
+    recipe_parser_dynamodb._save_recipe_to_dynamodb(recipe)
+
+    # Verify only one entry exists
+    response = recipe_parser_dynamodb.table.scan()
+    assert len(response["Items"]) == 1
