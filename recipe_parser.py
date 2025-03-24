@@ -32,6 +32,7 @@ class RecipeParser:
         output_file: str = "recipes.json",
         table_name: str = "recipes",
         region: str = "us-east-1",
+        client: Optional[OpenAI] = None,
     ):
         """
         Initialize the RecipeParser with OpenAI client and load environment variables.
@@ -41,9 +42,10 @@ class RecipeParser:
             output_file: Path to the output JSON file (only used if storage_type is "file")
             table_name: Name of the DynamoDB table (only used if storage_type is "dynamodb")
             region: AWS region for DynamoDB (only used if storage_type is "dynamodb")
+            client: Optional OpenAI client instance (if not provided, one will be created)
         """
         load_dotenv()
-        self.client = OpenAI()
+        self.client = client if client is not None else OpenAI()
         self.storage_type = storage_type
         self.output_file = output_file
 
