@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from models import Recipe
 
 
@@ -81,7 +79,7 @@ def test_parse_recipes_batch(recipe_parser):
     assert all(isinstance(recipe, Recipe) for recipe in recipes)
 
 
-def test_save_recipe_to_file(recipe_parser, tmp_path):
+def test_save_recipe_to_file(recipe_parser):
     """
     GIVEN: A recipe and file storage configuration
     WHEN: _save_recipe_to_file is called

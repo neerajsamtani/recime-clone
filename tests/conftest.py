@@ -1,7 +1,6 @@
 import json
 import os
 import time
-from pathlib import Path
 
 import boto3
 import pytest
@@ -30,7 +29,7 @@ def mock_aws_services():
 
 
 @pytest.fixture
-def mock_dynamodb_table(mock_aws_services):
+def mock_dynamodb_table():
     """Create a mock DynamoDB table for testing."""
     dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 

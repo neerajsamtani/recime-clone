@@ -3,7 +3,6 @@ from unittest.mock import Mock
 
 import pytest
 import requests
-from bs4 import BeautifulSoup
 
 from models import Recipe
 
