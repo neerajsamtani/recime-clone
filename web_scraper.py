@@ -199,7 +199,7 @@ def create_app(config_name="default"):
             return jsonify({"error": "Invalid recipe data", "details": str(e)}), 400
         except Exception as e:
             logger.error(f"Error creating recipe: {str(e)}")
-            return jsonify({"error": "Failed to create recipe"}), 500
+            return jsonify({"error": "Failed to create recipe", "details": str(e)}), 500
 
     @app.route("/")
     def index():

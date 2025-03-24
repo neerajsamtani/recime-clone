@@ -24,4 +24,36 @@ export async function DELETE(
             { status: 500 }
         );
     }
+}
+
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const body = await request.json();
+
+        const response = await fetch(`${config.api.url}/recipes/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Failed to update recipe' }));
+            return NextResponse.json(error, { status: response.status });
+        }
+
+        const updatedRecipe = await response.json();
+        return NextResponse.json(updatedRecipe);
+    } catch (error) {
+        console.error('Error updating recipe:', error);
+        return NextResponse.json(
+            { error: 'Failed to update recipe' },
+            { status: 500 }
+        );
+    }
 } 
