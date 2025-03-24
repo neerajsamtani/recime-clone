@@ -12,6 +12,39 @@ from recipe_parser import RecipeParser
 from web_scraper import create_app
 
 
+@pytest.fixture(autouse=True)
+def mock_aws_credentials():
+    """Mock AWS credentials for all tests."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+
+
+@pytest.fixture(autouse=True)
+def mock_aws_services():
+    """Mock all AWS services for tests."""
+    with mock_aws():
+        yield
+
+
+@pytest.fixture
+def mock_dynamodb_table(mock_aws_services):
+    """Create a mock DynamoDB table for testing."""
+    dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+
+    # Create the mock table
+    table = dynamodb.create_table(
+        TableName="recipes",
+        KeySchema=[{"AttributeName": "id", "KeyType": "HASH"}],
+        AttributeDefinitions=[{"AttributeName": "id", "AttributeType": "S"}],
+        ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+    )
+
+    return table
+
+
 @pytest.fixture
 def app():
     """Create and configure a test Flask application instance."""
@@ -69,23 +102,6 @@ def mock_openai_client(mocker):
 
 
 @pytest.fixture
-def mock_dynamodb_table():
-    """Create a mock DynamoDB table for testing."""
-    with mock_aws():
-        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-
-        # Create the mock table
-        table = dynamodb.create_table(
-            TableName="recipes",
-            KeySchema=[{"AttributeName": "id", "KeyType": "HASH"}],
-            AttributeDefinitions=[{"AttributeName": "id", "AttributeType": "S"}],
-            ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
-        )
-
-        yield table
-
-
-@pytest.fixture
 def recipe_parser(mock_openai_client, tmp_path):
     """Create a RecipeParser instance with mocked dependencies."""
     parser = RecipeParser(
@@ -100,7 +116,9 @@ def recipe_parser(mock_openai_client, tmp_path):
 def recipe_parser_dynamodb(mock_openai_client, mock_dynamodb_table):
     """Create a RecipeParser instance with DynamoDB storage."""
     parser = RecipeParser(
-        storage_type="dynamodb", table_name="recipes", client=mock_openai_client
+        storage_type="dynamodb",
+        table_name="recipes",
+        client=mock_openai_client,
     )
     parser.table = mock_dynamodb_table
     return parser
