@@ -45,7 +45,17 @@ class RecipeParser:
             client: Optional OpenAI client instance (if not provided, one will be created)
         """
         load_dotenv()
-        self.client = client if client is not None else OpenAI()
+
+        # Only create a new OpenAI client if none is provided and we're not in a testing environment
+        if client is not None:
+            self.client = client
+        else:
+            # Check if we're in a testing environment
+            testing = os.environ.get("PYTEST_CURRENT_TEST") is not None
+            if testing:
+                raise ValueError("OpenAI client must be provided in test environment")
+            self.client = OpenAI()
+
         self.storage_type = storage_type
         self.output_file = output_file
 

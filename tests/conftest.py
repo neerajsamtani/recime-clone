@@ -89,17 +89,19 @@ def mock_dynamodb_table():
 def recipe_parser(mock_openai_client, tmp_path):
     """Create a RecipeParser instance with mocked dependencies."""
     parser = RecipeParser(
-        storage_type="file", output_file=str(tmp_path / "recipes.json")
+        storage_type="file",
+        output_file=str(tmp_path / "recipes.json"),
+        client=mock_openai_client,
     )
-    parser.client = mock_openai_client
     return parser
 
 
 @pytest.fixture
 def recipe_parser_dynamodb(mock_openai_client, mock_dynamodb_table):
     """Create a RecipeParser instance with DynamoDB storage."""
-    parser = RecipeParser(storage_type="dynamodb", table_name="recipes")
-    parser.client = mock_openai_client
+    parser = RecipeParser(
+        storage_type="dynamodb", table_name="recipes", client=mock_openai_client
+    )
     parser.table = mock_dynamodb_table
     return parser
 
