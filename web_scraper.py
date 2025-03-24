@@ -2,12 +2,15 @@ import logging
 import os
 import time
 import urllib.parse
+from decimal import Decimal
 
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from pydantic import ValidationError
 
 from config import config
+from models import Recipe
 from recipe_parser import RecipeParser
 
 # Configure logging
@@ -99,6 +102,104 @@ def create_app(config_name="default"):
         except Exception as e:
             logger.error(f"Error fetching recipes: {str(e)}")
             return jsonify({"error": "Failed to fetch recipes"}), 500
+
+    @app.route("/recipes/<recipe_id>", methods=["PUT"])
+    def update_recipe(recipe_id):
+        try:
+            parser = RecipeParser(storage_type="dynamodb")
+            recipe_data = request.json
+
+            # Validate the recipe data using Pydantic model
+            recipe = Recipe.model_validate(recipe_data)
+            recipe.updated_at = int(time.time())  # Update timestamp
+
+            # Update in DynamoDB
+            parser.table.update_item(
+                Key={"id": recipe_id},
+                UpdateExpression="SET #name=:name, servings=:servings, calories=:calories, "
+                + "fat=:fat, carbs=:carbs, protein=:protein, "
+                + "ingredients=:ingredients, instructions=:instructions, "
+                + "updated_at=:updated_at",
+                ExpressionAttributeNames={
+                    "#name": "name"
+                },  # name is a reserved word in DynamoDB
+                ExpressionAttributeValues={
+                    ":name": recipe.name,
+                    ":servings": recipe.servings,
+                    ":calories": Decimal(str(recipe.calories)),  # Convert to Decimal
+                    ":fat": (
+                        {
+                            "amount": Decimal(str(recipe.fat.amount)),
+                            "unit": recipe.fat.unit,
+                        }
+                        if recipe.fat
+                        else None
+                    ),
+                    ":carbs": (
+                        {
+                            "amount": Decimal(str(recipe.carbs.amount)),
+                            "unit": recipe.carbs.unit,
+                        }
+                        if recipe.carbs
+                        else None
+                    ),
+                    ":protein": (
+                        {
+                            "amount": Decimal(str(recipe.protein.amount)),
+                            "unit": recipe.protein.unit,
+                        }
+                        if recipe.protein
+                        else None
+                    ),
+                    ":ingredients": [
+                        {
+                            "name": i.name,
+                            "quantity": Decimal(str(i.quantity)),
+                            "unit": i.unit,
+                        }
+                        for i in recipe.ingredients
+                    ],
+                    ":instructions": recipe.instructions,
+                    ":updated_at": recipe.updated_at,
+                },
+            )
+            return jsonify(recipe.model_dump())
+        except ValidationError as e:
+            return jsonify({"error": "Invalid recipe data", "details": str(e)}), 400
+        except Exception as e:
+            logger.error(f"Error updating recipe {recipe_id}: {str(e)}")
+            return jsonify({"error": "Failed to update recipe"}), 500
+
+    @app.route("/recipes", methods=["POST"])
+    def create_recipe():
+        try:
+            parser = RecipeParser(storage_type="dynamodb")
+            recipe_data = request.json
+
+            # Validate the recipe data using Pydantic model
+            recipe = Recipe.model_validate(recipe_data)
+            current_time = int(time.time())
+            recipe.created_at = current_time
+            recipe.updated_at = current_time
+
+            # Generate recipe ID from URL if provided, otherwise use timestamp
+            recipe_id = (
+                parser._generate_recipe_id(recipe.url)
+                if recipe.url
+                else str(current_time)
+            )
+
+            # Save to DynamoDB
+            recipe_dict = recipe.model_dump()
+            recipe_dict["id"] = recipe_id
+            parser.table.put_item(Item=recipe_dict)
+
+            return jsonify(recipe_dict), 201
+        except ValidationError as e:
+            return jsonify({"error": "Invalid recipe data", "details": str(e)}), 400
+        except Exception as e:
+            logger.error(f"Error creating recipe: {str(e)}")
+            return jsonify({"error": "Failed to create recipe"}), 500
 
     @app.route("/")
     def index():
