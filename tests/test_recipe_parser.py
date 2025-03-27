@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
+from unittest.mock import Mock
 
-from models import Recipe
+from models import BaseRecipe, Recipe
 
 
 def test_recipe_parser_initialization(recipe_parser):
@@ -29,22 +30,28 @@ def test_parse_recipe_success(recipe_parser, sample_recipe_text):
     """
     GIVEN: A recipe text and URL
     WHEN: parse_recipe is called
-    THEN: It should return a valid Recipe object
+    THEN: It should return a valid Recipe object with both base and metadata fields
     """
     url = "https://example.com/recipe"
     image_url = "https://example.com/recipe.jpg"
 
     recipe = recipe_parser.parse_recipe(sample_recipe_text, url, image_url)
 
+    # Test base recipe fields
     assert isinstance(recipe, Recipe)
     assert recipe.name == "Test Recipe"
-    assert recipe.url == url
-    assert recipe.image_url == image_url
     assert recipe.servings == 4
     assert len(recipe.ingredients) == 1
     assert len(recipe.instructions) == 1
+
+    # Test metadata fields
+    assert recipe.url == url
+    assert recipe.image_url == image_url
     assert recipe.created_at is not None
     assert recipe.updated_at is not None
+    assert (
+        recipe.created_at == recipe.updated_at
+    )  # Should be set to same time when created
 
 
 def test_parse_recipe_failure(recipe_parser, mocker):
@@ -147,3 +154,38 @@ def test_duplicate_recipe_dynamodb(recipe_parser_dynamodb):
     # Verify only one entry exists
     response = recipe_parser_dynamodb.table.scan()
     assert len(response["Items"]) == 1
+
+
+def test_parse_recipe_base_fields(recipe_parser, mocker):
+    """
+    GIVEN: A recipe text
+    WHEN: parse_recipe is called
+    THEN: It should first create a BaseRecipe before converting to Recipe
+    """
+    base_recipe_data = {
+        "name": "Test Recipe",
+        "servings": 4,
+        "calories": 500,
+        "fat": {"amount": 20, "unit": "g"},
+        "carbs": {"amount": 30, "unit": "g"},
+        "protein": {"amount": 15, "unit": "g"},
+        "ingredients": [{"name": "test", "quantity": "1", "unit": "cup"}],
+        "instructions": ["Step 1"],
+    }
+
+    # Mock OpenAI response to return our test data
+    mock_response = Mock()
+    mock_response.choices = [Mock(message=Mock(content=json.dumps(base_recipe_data)))]
+    mocker.patch.object(
+        recipe_parser.client.beta.chat.completions, "parse", return_value=mock_response
+    )
+
+    recipe = recipe_parser.parse_recipe("Test recipe", "https://example.com")
+
+    # Verify base fields were preserved
+    assert recipe.name == base_recipe_data["name"]
+    assert recipe.servings == base_recipe_data["servings"]
+    assert recipe.calories == base_recipe_data["calories"]
+    assert recipe.fat.amount == base_recipe_data["fat"]["amount"]
+    assert recipe.ingredients[0].name == base_recipe_data["ingredients"][0]["name"]
+    assert recipe.instructions == base_recipe_data["instructions"]

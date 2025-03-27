@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from models import Recipe
+from models import BaseRecipe, Recipe
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -81,7 +81,7 @@ class RecipeParser:
             # Create OpenAI API request
             response = self.client.beta.chat.completions.parse(
                 model="gpt-4o-mini-2024-07-18",
-                response_format=Recipe,
+                response_format=BaseRecipe,  # Use BaseRecipe for parsing
                 messages=[
                     {
                         "role": "system",
@@ -99,14 +99,21 @@ class RecipeParser:
                 temperature=0.1,  # Lower temperature for more consistent parsing
             )
 
-            # Parse the response into a Recipe object
-            recipe_dict = json.loads(response.choices[0].message.content)
+            # Parse the response into a BaseRecipe object first
+            base_recipe_dict = json.loads(response.choices[0].message.content)
+            base_recipe = BaseRecipe.model_validate(base_recipe_dict)
+
+            # Convert BaseRecipe to Recipe by adding metadata
+            recipe_dict = base_recipe.model_dump()
+            recipe_dict.update(
+                {
+                    "url": url,
+                    "image_url": image_url,
+                    "created_at": int(time.time()),
+                    "updated_at": int(time.time()),
+                }
+            )
             recipe = Recipe.model_validate(recipe_dict)
-            recipe.url = url  # Add URL to the recipe
-            recipe.image_url = image_url  # Add image URL to the recipe
-            current_time = int(time.time())  # Get current Unix timestamp
-            recipe.created_at = current_time
-            recipe.updated_at = current_time
             return recipe
 
         except Exception as e:

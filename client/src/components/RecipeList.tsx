@@ -161,8 +161,8 @@ export function RecipeList({ className, recipes = [] }: RecipeListProps) {
                                 <Button
                                     variant="destructive"
                                     size="icon"
-                                    disabled={deletingRecipes.has(recipe.id)}
-                                    onClick={() => handleDeleteRecipe(recipe.id)}
+                                    disabled={!recipe.id || deletingRecipes.has(recipe.id)}
+                                    onClick={() => recipe.id && handleDeleteRecipe(recipe.id)}
                                 >
                                     <Trash2 className="h-4 w-4" />
                                     <span className="sr-only">Delete recipe</span>

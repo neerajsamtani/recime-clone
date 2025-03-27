@@ -19,10 +19,9 @@ class Macro(BaseModel):
     unit: str
 
 
-class Recipe(BaseModel):
-    """Represents a complete recipe with all its components."""
+class BaseRecipe(BaseModel):
+    """Base recipe model used for parsing recipe content."""
 
-    id: str | None = None  # Hash of the URL, will be set when saving
     name: str
     servings: int
     calories: Decimal
@@ -31,6 +30,12 @@ class Recipe(BaseModel):
     protein: Macro | None
     ingredients: List[Ingredient]
     instructions: List[str]
+
+
+class Recipe(BaseRecipe):
+    """Complete recipe model with storage and metadata fields."""
+
+    id: str | None = None  # Hash of the URL, will be set when saving
     url: str  # URL where the recipe was found
     created_at: int  # unix timestamp
     updated_at: int  # unix timestamp

@@ -4,26 +4,34 @@ from unittest.mock import Mock
 import pytest
 import requests
 
-from models import Recipe
+from models import BaseRecipe, Recipe
 
 
 @pytest.fixture
 def mock_recipe():
     """Create a mock recipe that behaves like a Recipe model."""
-    recipe_dict = {
+    # Base recipe fields
+    base_recipe_dict = {
         "name": "Test Recipe",
         "servings": 4,
-        "ingredients": [{"quantity": 1, "unit": "cup", "name": "test"}],
+        "calories": 500,
+        "ingredients": [{"quantity": "1", "unit": "cup", "name": "test"}],
         "instructions": ["Step 1"],
+        "fat": {"amount": 5, "unit": "g"},
+        "protein": {"amount": 10, "unit": "g"},
+        "carbs": {"amount": 20, "unit": "g"},
+    }
+
+    # Full recipe with metadata
+    recipe_dict = {
+        **base_recipe_dict,
+        "id": "test-id",
         "url": "https://example.com/recipe",
         "image_url": "https://example.com/image.jpg",
         "created_at": 1234567890,
         "updated_at": 1234567890,
-        "calories": {"amount": 100, "unit": "kcal"},
-        "protein": {"amount": 10, "unit": "g"},
-        "carbs": {"amount": 20, "unit": "g"},
-        "fat": {"amount": 5, "unit": "g"},
     }
+
     recipe = Mock(spec=Recipe)
     recipe.model_dump.return_value = recipe_dict
     for key, value in recipe_dict.items():
