@@ -5,12 +5,11 @@ export interface Macro {
 
 export interface Ingredient {
     name: string;
-    quantity: number;
+    quantity: number | string;
     unit: string;
 }
 
-export interface Recipe {
-    id: string;
+export interface BaseRecipe {
     name: string;
     servings: number;
     calories: number;
@@ -19,7 +18,12 @@ export interface Recipe {
     protein: Macro | null;
     ingredients: Ingredient[];
     instructions: string[];
+}
+
+export interface Recipe extends BaseRecipe {
+    id?: string;
     url: string;
-    created_at: string;
+    created_at: number;
+    updated_at: number;
     image_url?: string;
 } 
