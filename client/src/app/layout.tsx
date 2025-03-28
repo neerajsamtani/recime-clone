@@ -1,7 +1,9 @@
+import { Header } from "@/components/layout/header";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Recipes",
-  description: "Save recipes from Instagram",
+  title: "Recime",
+  description: "Save and organize your favorite recipes from Instagram",
 };
 
 export default function RootLayout({
@@ -24,9 +26,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+    <html lang="en" className="h-full">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}>
+        <Providers>
+          <div className="flex min-h-full flex-col">
+            <Header />
+            <main className="flex flex-1 flex-col">
+              <div className="flex flex-1 flex-col container max-w-4xl mx-auto px-4">
+                {children}
+              </div>
+            </main>
+          </div>
+        </Providers>
         <Toaster position="top-right" richColors />
       </body>
     </html>
