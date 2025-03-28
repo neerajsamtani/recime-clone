@@ -1,4 +1,4 @@
-import HealthStatus from '../components/HealthStatus';
+import HealthStatus from '@/components/HealthStatus';
 
 export default function Health() {
     return (

@@ -8,7 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { LogOut, UserRoundIcon } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -19,7 +19,7 @@ export function UserMenu() {
         return (
             <Button variant="ghost" size="icon" disabled>
                 <Avatar className="h-6 w-6">
-                    <AvatarFallback>...</AvatarFallback>
+                    <AvatarFallback><UserRoundIcon /></AvatarFallback>
                 </Avatar>
             </Button>
         );
