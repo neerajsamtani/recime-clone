@@ -1,5 +1,6 @@
 import { RecipeForm } from "@/components/RecipeForm";
 import { RecipeListContainer } from "@/components/RecipeListContainer";
+import { SignIn } from "@/components/SignIn";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
         <header className="mb-12 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-primary mb-4">Recime</h1>
           <p className="text-lg text-muted-foreground">Save and organize your favorite recipes from Instagram</p>
+          <SignIn />
         </header>
         <div className="max-w-3xl mx-auto space-y-12">
           <section>
