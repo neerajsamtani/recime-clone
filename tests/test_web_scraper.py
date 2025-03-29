@@ -105,7 +105,10 @@ def test_scrape_recipe_success(client, mocker, mock_recipe):
     mock_parser.parse_recipes.return_value = [mock_recipe]
     mocker.patch("web_scraper.RecipeParser", return_value=mock_parser)
 
-    response = client.get("/scrape/https://example.com/recipe")
+    response = client.post(
+        "/scrape",
+        json={"url": "https://example.com/recipe", "user_email": "test@example.com"},
+    )
     data = json.loads(response.data)
 
     assert response.status_code == 200
@@ -120,7 +123,9 @@ def test_scrape_recipe_invalid_url(client):
     WHEN: Accessing the scrape endpoint
     THEN: It should return an error
     """
-    response = client.get("/scrape/invalid-url")
+    response = client.post(
+        "/scrape", json={"url": "invalid-url", "user_email": "test@example.com"}
+    )
     data = json.loads(response.data)
 
     assert response.status_code == 400
@@ -135,7 +140,10 @@ def test_scrape_recipe_request_error(client, mocker):
     """
     mocker.patch("requests.get", side_effect=requests.RequestException("Network error"))
 
-    response = client.get("/scrape/https://example.com/recipe")
+    response = client.post(
+        "/scrape",
+        json={"url": "https://example.com/recipe", "user_email": "test@example.com"},
+    )
     data = json.loads(response.data)
 
     assert response.status_code == 400
@@ -154,7 +162,10 @@ def test_scrape_recipe_no_content(client, mocker):
     mock_response.raise_for_status = Mock()
     mocker.patch("requests.get", return_value=mock_response)
 
-    response = client.get("/scrape/https://example.com/recipe")
+    response = client.post(
+        "/scrape",
+        json={"url": "https://example.com/recipe", "user_email": "test@example.com"},
+    )
     data = json.loads(response.data)
 
     assert response.status_code == 404
