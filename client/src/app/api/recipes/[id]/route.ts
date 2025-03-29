@@ -1,20 +1,26 @@
-import { config } from '@/config';
+import { auth } from '@/auth';
+import { dynamodb } from '@/lib/dynamodb';
+import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const session = await auth()
+    if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     try {
         const { id } = await params;
-        const response = await fetch(`${config.api.url}/recipes/${id}`, {
-            method: 'DELETE',
+
+        const command = new DeleteCommand({
+            TableName: 'recipes',
+            Key: { id },
         });
 
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ error: 'Failed to delete recipe' }));
-            return NextResponse.json(error, { status: response.status });
-        }
+        await dynamodb.send(command);
 
         return NextResponse.json({ message: 'Recipe deleted successfully' });
     } catch (error) {

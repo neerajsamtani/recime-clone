@@ -3,26 +3,49 @@ import { SearchableRecipeList } from './SearchableRecipeList';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Skeleton } from './ui/skeleton';
 
+import { auth } from '@/auth';
+import { dynamodb } from '@/lib/dynamodb';
+import { Recipe } from '@/types/recipe';
+import { ScanCommand, ScanCommandOutput } from '@aws-sdk/lib-dynamodb';
+
 async function getRecipes() {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/recipes`, {
-        // Prevent caching to ensure fresh data
-        cache: 'no-store',
-    });
+    const recipes: Recipe[] = [];
+    const error: string | null = null;
+    try {
+        let lastEvaluatedKey: Record<string, unknown> | undefined;
 
-    if (!response.ok) {
-        throw new Error('Failed to fetch recipes');
+        // Handle pagination using do-while loop
+        do {
+            const command: ScanCommand = new ScanCommand({
+                TableName: 'recipes',
+                ExclusiveStartKey: lastEvaluatedKey,
+            });
+
+            const response: ScanCommandOutput = await dynamodb.send(command);
+
+            if (response.Items) {
+                recipes.push(...response.Items as Recipe[]);
+            }
+
+            lastEvaluatedKey = response.LastEvaluatedKey;
+        } while (lastEvaluatedKey);
+
+    } catch (error) {
+        console.error('Error fetching recipes:', error);
+        error = 'Failed to fetch recipes';
     }
-
-    const data = await response.json();
-    if ('error' in data) {
-        throw new Error(data.error);
-    }
-
-    return data;
+    return { recipes, error };
 }
 
 export async function RecipeListContainer() {
-    const recipes = await getRecipes();
+    const session = await auth()
+    if (!session) {
+        return <></>
+    }
+    const { recipes, error } = await getRecipes();
+    if (error) {
+        return <div>{error}</div>
+    }
 
     return (
         <Suspense fallback={
