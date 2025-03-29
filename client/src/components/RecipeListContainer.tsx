@@ -8,7 +8,7 @@ import { dynamodb } from '@/lib/dynamodb';
 import { Recipe } from '@/types/recipe';
 import { ScanCommand, ScanCommandOutput } from '@aws-sdk/lib-dynamodb';
 
-async function getRecipes() {
+async function getRecipes(userEmail?: string) {
     const recipes: Recipe[] = [];
     const error: string | null = null;
     try {
@@ -19,6 +19,10 @@ async function getRecipes() {
             const command: ScanCommand = new ScanCommand({
                 TableName: 'recipes',
                 ExclusiveStartKey: lastEvaluatedKey,
+                FilterExpression: 'user_email = :userEmail',
+                ExpressionAttributeValues: {
+                    ':userEmail': userEmail,
+                },
             });
 
             const response: ScanCommandOutput = await dynamodb.send(command);
@@ -42,7 +46,7 @@ export async function RecipeListContainer() {
     if (!session) {
         return <></>
     }
-    const { recipes, error } = await getRecipes();
+    const { recipes, error } = await getRecipes(session.user?.email ?? undefined);
     if (error) {
         return <div>{error}</div>
     }
