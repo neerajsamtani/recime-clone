@@ -1,7 +1,14 @@
+import { auth } from '@/auth';
 import { config } from '@/config';
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
+    const session = await auth()
+    if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     try {
         const body = await request.json();
         const url = body.url;
@@ -34,7 +41,10 @@ export async function POST(request: Request) {
             );
         }
 
-        const response = await fetch(`${config.api.url}/scrape/${encodeURIComponent(urlWithProtocol)}`);
+        const response = await fetch(`${config.api.url}/scrape/${encodeURIComponent(urlWithProtocol)}`,
+            {
+                headers: await headers()
+            });
         const data = await response.json();
 
         return NextResponse.json(data);

@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SiInstagram } from "@icons-pack/react-simple-icons";
 import { Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +12,8 @@ export function RecipeForm() {
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+
+    // TODO: Separate this into a client and server component that calls a route handler
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,11 +48,6 @@ export function RecipeForm() {
             setIsLoading(false);
         }
     };
-
-    const { data: session } = useSession()
-    if (!session) {
-        return <></>
-    }
 
     return (
         <>

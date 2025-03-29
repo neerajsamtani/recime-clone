@@ -1,3 +1,4 @@
+import { auth } from '@/auth';
 import { dynamodb } from '@/lib/dynamodb';
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,6 +7,11 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const session = await auth()
+    if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     try {
         const { id } = await params;
 
