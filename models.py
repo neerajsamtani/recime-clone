@@ -39,4 +39,5 @@ class Recipe(BaseRecipe):
     url: str  # URL where the recipe was found
     created_at: int  # unix timestamp
     updated_at: int  # unix timestamp
+    user_email: str  # Email of the user who owns the recipe
     image_url: str | None

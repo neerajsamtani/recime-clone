@@ -49,6 +49,7 @@ def test_parse_recipe_success(recipe_parser, sample_recipe_text):
     assert recipe.image_url == image_url
     assert recipe.created_at is not None
     assert recipe.updated_at is not None
+    assert recipe.user_email == "test@example.com"
     assert (
         recipe.created_at == recipe.updated_at
     )  # Should be set to same time when created

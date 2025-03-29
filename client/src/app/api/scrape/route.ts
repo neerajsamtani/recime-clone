@@ -1,6 +1,5 @@
 import { auth } from '@/auth';
 import { config } from '@/config';
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -41,10 +40,13 @@ export async function POST(request: Request) {
             );
         }
 
-        const response = await fetch(`${config.api.url}/scrape/${encodeURIComponent(urlWithProtocol)}`,
-            {
-                headers: await headers()
-            });
+        const response = await fetch(`${config.api.url}/scrape`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: urlWithProtocol, user_email: session.user?.email })
+        });
         const data = await response.json();
 
         return NextResponse.json(data);

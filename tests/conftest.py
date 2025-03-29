@@ -78,6 +78,7 @@ def mock_openai_client(mocker):
                         "image_url": "https://example.com/recipe.jpg",
                         "created_at": current_time,
                         "updated_at": current_time,
+                        "user_email": "test@example.com",
                         "calories": "100",
                         "fat": {"amount": "4", "unit": "g"},
                         "carbs": {"amount": "15", "unit": "g"},

@@ -30,6 +30,7 @@ def mock_recipe():
         "image_url": "https://example.com/image.jpg",
         "created_at": 1234567890,
         "updated_at": 1234567890,
+        "user_email": "test@example.com",
     }
 
     recipe = Mock(spec=Recipe)
