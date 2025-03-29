@@ -34,8 +34,9 @@ def test_parse_recipe_success(recipe_parser, sample_recipe_text):
     """
     url = "https://example.com/recipe"
     image_url = "https://example.com/recipe.jpg"
+    user_email = "test@example.com"
 
-    recipe = recipe_parser.parse_recipe(sample_recipe_text, url, image_url)
+    recipe = recipe_parser.parse_recipe(sample_recipe_text, url, user_email, image_url)
 
     # Test base recipe fields
     assert isinstance(recipe, Recipe)
@@ -49,6 +50,7 @@ def test_parse_recipe_success(recipe_parser, sample_recipe_text):
     assert recipe.image_url == image_url
     assert recipe.created_at is not None
     assert recipe.updated_at is not None
+    assert recipe.user_email == user_email
     assert (
         recipe.created_at == recipe.updated_at
     )  # Should be set to same time when created
@@ -66,7 +68,9 @@ def test_parse_recipe_failure(recipe_parser, mocker):
         side_effect=Exception("API Error"),
     )
 
-    result = recipe_parser.parse_recipe("Invalid recipe", "https://example.com")
+    result = recipe_parser.parse_recipe(
+        "Invalid recipe", "https://example.com", "test@example.com"
+    )
     assert result is None
 
 
@@ -78,9 +82,10 @@ def test_parse_recipes_batch(recipe_parser):
     """
     descriptions = ["Recipe 1", "Recipe 2"]
     urls = ["https://example.com/1", "https://example.com/2"]
+    user_emails = ["test1@example.com", "test2@example.com"]
     image_urls = ["https://example.com/1.jpg", "https://example.com/2.jpg"]
 
-    recipes = recipe_parser.parse_recipes(descriptions, urls, image_urls)
+    recipes = recipe_parser.parse_recipes(descriptions, urls, user_emails, image_urls)
 
     assert len(recipes) == 2
     assert all(isinstance(recipe, Recipe) for recipe in recipes)
@@ -93,7 +98,8 @@ def test_save_recipe_to_file(recipe_parser):
     THEN: The recipe should be saved to the JSON file
     """
     url = "https://example.com/recipe"
-    recipe = recipe_parser.parse_recipe("Test recipe", url)
+    user_email = "test@example.com"
+    recipe = recipe_parser.parse_recipe("Test recipe", url, user_email)
     recipe_parser._save_recipe_to_file(recipe)
 
     output_file = Path(recipe_parser.output_file)
@@ -113,7 +119,8 @@ def test_save_recipe_to_dynamodb(recipe_parser_dynamodb):
     THEN: The recipe should be saved to DynamoDB
     """
     url = "https://example.com/recipe"
-    recipe = recipe_parser_dynamodb.parse_recipe("Test recipe", url)
+    user_email = "test@example.com"
+    recipe = recipe_parser_dynamodb.parse_recipe("Test recipe", url, user_email)
     recipe_parser_dynamodb._save_recipe_to_dynamodb(recipe)
 
     # Verify the recipe was saved
@@ -145,7 +152,8 @@ def test_duplicate_recipe_dynamodb(recipe_parser_dynamodb):
     THEN: It should skip the duplicate
     """
     url = "https://example.com/recipe"
-    recipe = recipe_parser_dynamodb.parse_recipe("Test recipe", url)
+    user_email = "test@example.com"
+    recipe = recipe_parser_dynamodb.parse_recipe("Test recipe", url, user_email)
 
     # Save the recipe twice
     recipe_parser_dynamodb._save_recipe_to_dynamodb(recipe)
@@ -180,7 +188,9 @@ def test_parse_recipe_base_fields(recipe_parser, mocker):
         recipe_parser.client.beta.chat.completions, "parse", return_value=mock_response
     )
 
-    recipe = recipe_parser.parse_recipe("Test recipe", "https://example.com")
+    recipe = recipe_parser.parse_recipe(
+        "Test recipe", "https://example.com", "test@example.com"
+    )
 
     # Verify base fields were preserved
     assert recipe.name == base_recipe_data["name"]

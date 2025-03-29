@@ -64,7 +64,11 @@ class RecipeParser:
             self.table = self.dynamodb.Table(table_name)
 
     def parse_recipe(
-        self, description: str, url: str, image_url: Optional[str] = None
+        self,
+        description: str,
+        url: str,
+        user_email: str,
+        image_url: Optional[str] = None,
     ) -> Optional[Recipe]:
         """
         Parse a recipe from a text description using OpenAI.
@@ -72,8 +76,8 @@ class RecipeParser:
         Args:
             description: Text description of the recipe
             url: URL where the recipe was found
+            user_email: Email of the user who owns the recipe
             image_url: URL of the recipe's image (optional)
-
         Returns:
             Recipe object if successful, None otherwise
         """
@@ -111,6 +115,7 @@ class RecipeParser:
                     "image_url": image_url,
                     "created_at": int(time.time()),
                     "updated_at": int(time.time()),
+                    "user_email": user_email,
                 }
             )
             recipe = Recipe.model_validate(recipe_dict)
@@ -124,6 +129,7 @@ class RecipeParser:
         self,
         descriptions: List[str],
         urls: List[str],
+        user_emails: List[str],
         image_urls: Optional[List[str]] = None,
     ) -> List[Recipe]:
         """
@@ -132,6 +138,7 @@ class RecipeParser:
         Args:
             descriptions: List of recipe descriptions to parse
             urls: List of URLs where the recipes were found
+            user_emails: List of user emails for the recipes
             image_urls: List of image URLs for the recipes (optional)
 
         Returns:
@@ -143,11 +150,11 @@ class RecipeParser:
         if image_urls is None:
             image_urls = [None] * len(descriptions)
 
-        for i, (description, url, image_url) in enumerate(
-            zip(descriptions, urls, image_urls), 1
+        for i, (description, url, user_email, image_url) in enumerate(
+            zip(descriptions, urls, user_emails, image_urls), 1
         ):
             print(f"Processing recipe {i}...")
-            recipe = self.parse_recipe(description, url, image_url)
+            recipe = self.parse_recipe(description, url, user_email, image_url)
 
             if recipe:
                 recipes.append(recipe)

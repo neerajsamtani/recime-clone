@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+
 interface ApiResponse {
     status: string;
     timestamp: number;
@@ -8,11 +10,12 @@ async function getHealthStatus(): Promise<ApiResponse> {
     // In server components, we need to use the full URL
     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/health`, {
         // Adding next: { revalidate: 30 } would cache the response for 30 seconds
-        cache: 'no-store' // Disable caching to always get fresh data
+        cache: 'no-store', // Disable caching to always get fresh data
+        headers: await headers()
     });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch health status');
+        throw new Error(response.statusText);
     }
 
     return response.json();

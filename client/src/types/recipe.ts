@@ -25,5 +25,6 @@ export interface Recipe extends BaseRecipe {
     url: string;
     created_at: number;
     updated_at: number;
+    user_email: string;
     image_url?: string;
 } 

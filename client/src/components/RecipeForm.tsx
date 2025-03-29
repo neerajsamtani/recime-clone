@@ -8,11 +8,12 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-
 export function RecipeForm() {
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+
+    // TODO: Separate this into a client and server component that calls a route handler
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,41 +50,44 @@ export function RecipeForm() {
     };
 
     return (
-        <Card className="w-full p-6 bg-card/50 backdrop-blur-sm">
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <SiInstagram className="h-4 w-4" />
-                        <span className="text-sm font-medium">Instagram Recipe URL</span>
+        <>
+            <h2 className="text-2xl font-bold">Import Recipe</h2>
+            <Card className="w-full p-6 bg-card/50 backdrop-blur-sm">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <SiInstagram className="h-4 w-4" />
+                            <span className="text-sm font-medium">Instagram Recipe URL</span>
+                        </div>
+                        <Input
+                            type="text"
+                            placeholder="Paste an Instagram recipe post URL..."
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            className="w-full bg-background/50"
+                            disabled={isLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Enter the URL of an Instagram post containing a recipe you&apos;d like to save
+                        </p>
                     </div>
-                    <Input
-                        type="text"
-                        placeholder="Paste an Instagram recipe post URL..."
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        className="w-full bg-background/50"
-                        disabled={isLoading}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                        Enter the URL of an Instagram post containing a recipe you&apos;d like to save
-                    </p>
-                </div>
-                <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading || !inputValue.trim()}
-                    size="lg"
-                >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Importing Recipe...
-                        </>
-                    ) : (
-                        "Import Recipe"
-                    )}
-                </Button>
-            </form>
-        </Card>
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoading || !inputValue.trim()}
+                        size="lg"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Importing Recipe...
+                            </>
+                        ) : (
+                            "Import Recipe"
+                        )}
+                    </Button>
+                </form>
+            </Card>
+        </>
     );
 } 

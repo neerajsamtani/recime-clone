@@ -5,7 +5,7 @@ import urllib.parse
 
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 from config import config
 from recipe_parser import RecipeParser
@@ -57,8 +57,12 @@ def create_app(config_name="default"):
             logger.error(f"Error extracting recipe content: {str(e)}")
             return None, None
 
-    @app.route("/scrape/<path:url>", methods=["GET"])
-    def scrape_recipe(url):
+    @app.route("/scrape", methods=["POST"])
+    def scrape_recipe():
+        data = request.json
+        url = data.get("url")
+        user_email = data.get("user_email")
+        logger.info(f"Scraping recipe from {url} for user {user_email}")
         try:
             soup = fetch_webpage(url)
             if not soup:
@@ -69,7 +73,9 @@ def create_app(config_name="default"):
                 return jsonify({"error": "No recipe content found"}), 404
 
             parser = RecipeParser(storage_type="dynamodb")
-            recipes = parser.parse_recipes([recipe_content], [url], [image_url])
+            recipes = parser.parse_recipes(
+                [recipe_content], [url], [user_email], [image_url]
+            )
 
             if not recipes:
                 return jsonify({"error": "Failed to parse recipe content"}), 400
