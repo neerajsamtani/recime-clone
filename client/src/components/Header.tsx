@@ -1,7 +1,9 @@
+import { auth } from "@/auth";
 import { UserMenu } from "@/components/UserMenu";
 import Link from "next/link";
 
-export function Header() {
+export async function Header() {
+    const session = await auth();
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-12 items-center">
@@ -11,7 +13,7 @@ export function Header() {
                     </Link>
                 </div>
                 <div className="flex flex-1 basis-0 justify-center">
-                    <UserMenu />
+                    <UserMenu session={session} />
                 </div>
             </div>
         </header>
