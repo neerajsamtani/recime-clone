@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import { config } from '@/config';
+import axios from 'axios';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -42,18 +43,15 @@ export async function POST(request: Request) {
         }
 
         console.log('Sending POST request to web scraper...');
-        const response = await fetch(`${config.api.url}/scrape`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ url: urlWithProtocol, user_email: session.user?.email })
-        });
+        const response = await axios.post(`${config.api.url}/scrape`,
+            { url: urlWithProtocol, user_email: session.user?.email },
+            { headers: { 'Content-Type': 'application/json' } }
+        );
         console.log('Response received from web scraper:', response.status);
-        console.log('Response:', await response.text());
-        const data = await response.json();
-        return NextResponse.json(data);
+        console.log('Response:', response.data);
+        return NextResponse.json(response.data);
     } catch (error) {
+        console.error('Error details:', error);
         return NextResponse.json(
             { error: 'Failed to scrape recipe', details: error },
             { status: 500 }
