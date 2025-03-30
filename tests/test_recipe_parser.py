@@ -124,7 +124,7 @@ def test_save_recipe_to_dynamodb(recipe_parser_dynamodb):
     recipe_parser_dynamodb._save_recipe_to_dynamodb(recipe)
 
     # Verify the recipe was saved
-    recipe_id = recipe_parser_dynamodb._generate_recipe_id(url)
+    recipe_id = recipe_parser_dynamodb._generate_recipe_id(url, user_email)
     saved_item = recipe_parser_dynamodb.table.get_item(Key={"id": recipe_id})
 
     assert "Item" in saved_item
@@ -138,11 +138,12 @@ def test_generate_recipe_id(recipe_parser):
     THEN: It should return a consistent hash
     """
     url = "https://example.com/recipe"
-    id1 = recipe_parser._generate_recipe_id(url)
-    id2 = recipe_parser._generate_recipe_id(url)
+    user_email = "test@example.com"
+    id1 = recipe_parser._generate_recipe_id(url, user_email)
+    id2 = recipe_parser._generate_recipe_id(url, user_email)
 
     assert isinstance(id1, str)
-    assert id1 == id2  # Same URL should generate same hash
+    assert id1 == id2  # Same URL and user email should generate same hash
 
 
 def test_duplicate_recipe_dynamodb(recipe_parser_dynamodb):

@@ -200,17 +200,18 @@ class RecipeParser:
         except Exception as e:
             print(f"Error saving recipe to file: {str(e)}")
 
-    def _generate_recipe_id(self, url: str) -> str:
+    def _generate_recipe_id(self, url: str, user_email: str) -> str:
         """
-        Generate a consistent hash ID from a URL.
+        Generate a consistent hash ID from a URL and user email.
 
         Args:
             url: URL to hash
+            user_email: User email to hash
 
         Returns:
-            str: SHA-256 hash of the URL
+            str: SHA-256 hash of the URL and user email
         """
-        return hashlib.sha256(url.encode()).hexdigest()
+        return hashlib.sha256(f"{url}:{user_email}".encode()).hexdigest()
 
     def _save_recipe_to_dynamodb(self, recipe: Recipe):
         """
@@ -222,7 +223,7 @@ class RecipeParser:
         try:
             recipe_dict = recipe.model_dump()
             # Generate hash ID from URL
-            recipe_id = self._generate_recipe_id(recipe.url)
+            recipe_id = self._generate_recipe_id(recipe.url, recipe.user_email)
             recipe_dict["id"] = recipe_id
 
             # Check if recipe already exists
