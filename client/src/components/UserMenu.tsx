@@ -8,22 +8,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, UserRoundIcon } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { LogOut } from "lucide-react";
+import type { Session } from "next-auth";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 
-export function UserMenu() {
-    const { data: session, status } = useSession();
-
-    if (status === "loading") {
-        return (
-            <Button variant="ghost" size="icon" disabled>
-                <Avatar className="h-6 w-6">
-                    <AvatarFallback><UserRoundIcon /></AvatarFallback>
-                </Avatar>
-            </Button>
-        );
-    }
+export function UserMenu({ session }: { session: Session | null }) {
 
     if (!session) {
         return (
