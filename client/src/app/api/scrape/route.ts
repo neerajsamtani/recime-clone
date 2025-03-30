@@ -7,6 +7,7 @@ export async function POST(request: Request) {
     if (!session) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    console.log('Scraping recipe for user:', session.user?.email);
 
     try {
         const body = await request.json();
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
             );
         }
 
+        console.log('Sending POST request to web scraper...');
         const response = await fetch(`${config.api.url}/scrape`, {
             method: 'POST',
             headers: {
@@ -47,8 +49,9 @@ export async function POST(request: Request) {
             },
             body: JSON.stringify({ url: urlWithProtocol, user_email: session.user?.email })
         });
+        console.log('Response received from web scraper:', response.status);
+        console.log('Response:', await response.text());
         const data = await response.json();
-
         return NextResponse.json(data);
     } catch (error) {
         return NextResponse.json(
