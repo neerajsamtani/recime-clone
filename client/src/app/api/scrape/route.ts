@@ -52,6 +52,10 @@ export async function POST(request: Request) {
         return NextResponse.json(response.data);
     } catch (error) {
         console.error('Error details:', error);
+        if (axios.isAxiosError(error)) {
+            console.error('Request:', error.request);
+            console.error('Error response:', error.response?.data);
+        }
         return NextResponse.json(
             { error: 'Failed to scrape recipe', details: error },
             { status: 500 }
